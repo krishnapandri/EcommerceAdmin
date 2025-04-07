@@ -38,14 +38,14 @@ interface SimpleNavItemProps {
 const SimpleNavItem = ({ href, label, icon, isActive }: SimpleNavItemProps) => (
   <li>
     <Link href={href}>
-      <a className={`flex items-center space-x-3 px-4 py-2.5 rounded-lg ${
+      <div className={`flex items-center space-x-3 px-4 py-2.5 rounded-lg cursor-pointer ${
         isActive 
           ? "bg-primary text-white" 
           : "text-gray-300 hover:bg-gray-700"
       } mb-1`}>
         <span className="w-5 text-center">{icon}</span>
         <span>{label}</span>
-      </a>
+      </div>
     </Link>
   </li>
 );
@@ -94,13 +94,13 @@ const SubmenuNavItem = ({
             {submenuItems.map((item, index) => (
               <li key={index}>
                 <Link href={item.href}>
-                  <a className={`block py-2 px-4 rounded-lg ${
+                  <div className={`block py-2 px-4 rounded-lg cursor-pointer ${
                     location.startsWith(item.href)
                       ? "bg-gray-700 text-white"
                       : "text-gray-400 hover:bg-gray-700 hover:text-gray-300"
                   }`}>
                     {item.label}
-                  </a>
+                  </div>
                 </Link>
               </li>
             ))}
@@ -247,7 +247,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           )}
         </div>
-        <div className="flex flex-col h-full overflow-y-auto py-4 px-2">
+        <div className="flex flex-col h-full overflow-y-hidden hover:overflow-y-auto py-4 px-2 transition-all">
           <nav>
             <ul>
               {navigationItems.map(item => {
@@ -342,10 +342,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <ol className="inline-flex items-center space-x-1 md:space-x-3">
                 <li className="inline-flex items-center">
                   <Link href="/">
-                    <a className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary">
+                    <div className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary cursor-pointer">
                       <Home className="mr-2 h-4 w-4" />
                       Home
-                    </a>
+                    </div>
                   </Link>
                 </li>
                 <li>
