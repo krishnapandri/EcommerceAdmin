@@ -74,11 +74,11 @@ export default function BrandList() {
     <div>
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">Brands</h1>
-        <Button asChild>
-          <Link href="/brands/new">
+        <Link href="/brands/new">
+          <Button>
             <Plus className="mr-2 h-4 w-4" /> Add Brand
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
 
       <Card className="mb-6">
@@ -124,11 +124,11 @@ export default function BrandList() {
                 </div>
               </div>
               <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-2 border-t">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/brands/edit/${brand.id}`}>
+                <Link href={`/brands/edit/${brand.id}`}>
+                  <Button variant="ghost" size="sm">
                     <Edit className="h-4 w-4 mr-1" /> Edit
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 

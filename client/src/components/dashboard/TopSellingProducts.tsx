@@ -54,7 +54,7 @@ export default function TopSellingProducts() {
       </div>
       <div className="bg-gray-50 px-5 py-3 border-t border-gray-200 text-center">
         <Link href="/products">
-          <a className="text-primary hover:underline text-sm font-medium">View all products</a>
+          <div className="text-primary hover:underline text-sm font-medium cursor-pointer">View all products</div>
         </Link>
       </div>
     </Card>

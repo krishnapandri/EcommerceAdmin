@@ -59,11 +59,11 @@ const CategoryItem = ({
           </Badge>
           
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href={`/categories/edit/${category.id}`}>
+            <Link href={`/categories/edit/${category.id}`}>
+              <Button variant="ghost" size="icon">
                 <Edit className="h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -93,11 +93,11 @@ export default function CategoryList() {
     <div>
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">Categories</h1>
-        <Button asChild>
-          <Link href="/categories/create">
+        <Link href="/categories/new">
+          <Button>
             <Plus className="mr-2 h-4 w-4" /> Add Category
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
 
       <Card className="mb-6">
