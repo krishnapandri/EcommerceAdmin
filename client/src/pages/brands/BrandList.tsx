@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Edit, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 interface Brand {
   id: string;
@@ -22,6 +35,36 @@ export default function BrandList() {
   });
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null);
+  const { toast } = useToast();
+
+  const deleteBrand = useMutation({
+    mutationFn: async (brandId: string) => {
+      const response = await apiRequest("DELETE", `/api/brands/${brandId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/brands'] });
+      toast({
+        title: "Brand deleted",
+        description: "The brand has been deleted successfully.",
+      });
+      setBrandToDelete(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete brand. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    if (brandToDelete) {
+      deleteBrand.mutate(brandToDelete.id);
+    }
+  };
 
   const filteredBrands = brands?.filter(
     brand => brand.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -32,7 +75,7 @@ export default function BrandList() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">Brands</h1>
         <Button asChild>
-          <Link href="/brands/create">
+          <Link href="/brands/new">
             <Plus className="mr-2 h-4 w-4" /> Add Brand
           </Link>
         </Button>
@@ -86,9 +129,41 @@ export default function BrandList() {
                     <Edit className="h-4 w-4 mr-1" /> Edit
                   </Link>
                 </Button>
-                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setBrandToDelete(brand)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete the brand "{brandToDelete?.name}"? 
+                        This action cannot be undone.
+                        {brandToDelete && brandToDelete.productCount > 0 && (
+                          <div className="mt-2 text-amber-600 font-medium">
+                            Warning: This brand has {brandToDelete.productCount} associated products.
+                          </div>
+                        )}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setBrandToDelete(null)}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                      >
+                        {deleteBrand.isPending ? "Deleting..." : "Delete Brand"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </Card>
           ))}

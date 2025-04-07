@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import * as React from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useParams } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   name: z.string().min(2, "Brand name must be at least 2 characters"),
@@ -28,10 +30,19 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function CreateBrand() {
+export default function BrandForm() {
+  const params = useParams();
+  const brandId = params.id;
+  const isEditMode = !!brandId;
+  
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const { data: brandData, isLoading } = useQuery({
+    queryKey: ['/api/brands', brandId],
+    enabled: isEditMode,
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,23 +52,45 @@ export default function CreateBrand() {
     },
   });
 
+  // Update form when brand data loads
+  useEffect(() => {
+    if (brandData && isEditMode) {
+      form.reset({
+        name: brandData.name,
+        description: brandData.description,
+      });
+      
+      // Set logo preview if available
+      if (brandData.logo) {
+        setLogoPreview(brandData.logo);
+      }
+    }
+  }, [brandData, form, isEditMode]);
+
   const createBrand = useMutation({
     mutationFn: async (values: FormValues) => {
-      const response = await apiRequest("POST", "/api/brands", values);
-      return response.json();
+      if (isEditMode) {
+        const response = await apiRequest("PUT", `/api/brands/${brandId}`, values);
+        return response.json();
+      } else {
+        const response = await apiRequest("POST", "/api/brands", values);
+        return response.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/brands'] });
       toast({
-        title: "Brand created",
-        description: "The brand has been created successfully.",
+        title: isEditMode ? "Brand updated" : "Brand created",
+        description: isEditMode 
+          ? "The brand has been updated successfully."
+          : "The brand has been created successfully.",
       });
       navigate("/brands");
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create brand. Please try again.",
+        description: error.message || `Failed to ${isEditMode ? 'update' : 'create'} brand. Please try again.`,
         variant: "destructive",
       });
     },
@@ -78,6 +111,62 @@ export default function CreateBrand() {
     }
   };
 
+  // Show loading state when in edit mode and data is being fetched
+  if (isEditMode && isLoading) {
+    return (
+      <div>
+        <div className="mb-6 flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate("/brands")}
+            className="mr-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-800">Edit Brand</h1>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardContent className="p-6 space-y-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
+                <div className="flex justify-end space-x-4 pt-4">
+                  <Skeleton className="h-10 w-24" />
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-5 w-32 mb-4" />
+                <Skeleton className="h-40 w-full mb-4" />
+                <Skeleton className="h-10 w-full mb-6" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-full" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-6 flex items-center">
@@ -89,7 +178,7 @@ export default function CreateBrand() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold text-gray-800">Create New Brand</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{isEditMode ? "Edit Brand" : "Create New Brand"}</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -145,7 +234,9 @@ export default function CreateBrand() {
                       type="submit" 
                       disabled={createBrand.isPending}
                     >
-                      {createBrand.isPending ? "Creating..." : "Create Brand"}
+                      {createBrand.isPending 
+                        ? (isEditMode ? "Updating..." : "Creating...") 
+                        : (isEditMode ? "Update Brand" : "Create Brand")}
                     </Button>
                   </div>
                 </form>

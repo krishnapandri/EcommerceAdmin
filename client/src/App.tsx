@@ -28,12 +28,15 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/products" component={ProductList} />
-        <Route path="/products/create" component={CreateProduct} />
+        <Route path="/products/new" component={CreateProduct} />
+        <Route path="/products/edit/:id" component={CreateProduct} />
         <Route path="/products/reviews" component={ProductReviews} />
         <Route path="/categories" component={CategoryList} />
-        <Route path="/categories/create" component={CreateCategory} />
+        <Route path="/categories/new" component={CreateCategory} />
+        <Route path="/categories/edit/:id" component={CreateCategory} />
         <Route path="/brands" component={BrandList} />
-        <Route path="/brands/create" component={CreateBrand} />
+        <Route path="/brands/new" component={CreateBrand} />
+        <Route path="/brands/edit/:id" component={CreateBrand} />
         <Route path="/orders" component={OrderList} />
         <Route path="/orders/:id" component={OrderDetails} />
         <Route path="/customers" component={CustomerList} />

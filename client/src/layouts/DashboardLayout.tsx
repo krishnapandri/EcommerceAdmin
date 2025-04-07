@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import * as React from "react";
 import { Link, useLocation } from "wouter";
 import { 
   ChevronRight, 
@@ -27,45 +27,103 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const NavItem = ({ 
+interface SimpleNavItemProps {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  isActive: boolean;
+}
+
+// Simple nav item without submenu
+const SimpleNavItem = ({ href, label, icon, isActive }: SimpleNavItemProps) => (
+  <li>
+    <Link href={href}>
+      <a className={`flex items-center space-x-3 px-4 py-2.5 rounded-lg ${
+        isActive 
+          ? "bg-primary text-white" 
+          : "text-gray-300 hover:bg-gray-700"
+      } mb-1`}>
+        <span className="w-5 text-center">{icon}</span>
+        <span>{label}</span>
+      </a>
+    </Link>
+  </li>
+);
+
+interface SubmenuNavItemProps {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  submenuItems: Array<{label: string, href: string}>;
+  isActive: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+// Submenu nav item
+const SubmenuNavItem = ({ 
   href, 
   label, 
   icon, 
-  active = false,
-  hasSubmenu = false
-}: { 
-  href: string; 
-  label: string; 
-  icon: React.ReactNode; 
-  active?: boolean;
-  hasSubmenu?: boolean;
-}) => {
+  submenuItems,
+  isActive,
+  isExpanded,
+  onToggle
+}: SubmenuNavItemProps) => {
   const [location] = useLocation();
-  const isActive = active || location === href;
-
+  
   return (
     <li>
-      <Link href={href}>
-        <a className={`flex items-center ${hasSubmenu ? 'justify-between' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-          isActive 
-            ? "bg-primary text-white" 
-            : "text-gray-300 hover:bg-gray-700"
-        } mb-1`}>
+      <div>
+        <button 
+          onClick={onToggle}
+          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg ${
+            isActive 
+              ? "bg-primary text-white" 
+              : "text-gray-300 hover:bg-gray-700"
+          } mb-1`}
+        >
           <div className="flex items-center space-x-3">
             <span className="w-5 text-center">{icon}</span>
             <span>{label}</span>
           </div>
-          {hasSubmenu && <ChevronRight className="h-4 w-4" />}
-        </a>
-      </Link>
+          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
+        {isExpanded && (
+          <ul className="pl-10 mb-2">
+            {submenuItems.map((item, index) => (
+              <li key={index}>
+                <Link href={item.href}>
+                  <a className={`block py-2 px-4 rounded-lg ${
+                    location.startsWith(item.href)
+                      ? "bg-gray-700 text-white"
+                      : "text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+                  }`}>
+                    {item.label}
+                  </a>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </li>
   );
 };
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
   const [location] = useLocation();
+  const [expandedMenus, setExpandedMenus] = React.useState<Record<string, boolean>>({});
+
+  // Toggle a specific submenu
+  const toggleSubmenu = (menuId: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuId]: !prev[menuId]
+    }));
+  };
 
   // Get current page title
   const getPageTitle = () => {
@@ -75,11 +133,100 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   // Close sidebar on mobile when route changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [location, isMobile]);
+
+  // Define navigation items and their submenus
+  const navigationItems = [
+    {
+      id: 'dashboard',
+      href: '/',
+      label: 'Dashboard',
+      icon: <BarChart2 className="h-5 w-5" />,
+      hasSubmenu: false
+    },
+    {
+      id: 'products',
+      href: '/products',
+      label: 'Products',
+      icon: <Package className="h-5 w-5" />,
+      hasSubmenu: true,
+      submenuItems: [
+        { label: 'All Products', href: '/products' },
+        { label: 'Add Product', href: '/products/new' },
+        { label: 'Out of Stock', href: '/products/out-of-stock' }
+      ]
+    },
+    {
+      id: 'categories',
+      href: '/categories',
+      label: 'Categories',
+      icon: <Folder className="h-5 w-5" />,
+      hasSubmenu: true,
+      submenuItems: [
+        { label: 'All Categories', href: '/categories' },
+        { label: 'Add Category', href: '/categories/new' }
+      ]
+    },
+    {
+      id: 'brands',
+      href: '/brands',
+      label: 'Brands',
+      icon: <Tag className="h-5 w-5" />,
+      hasSubmenu: true,
+      submenuItems: [
+        { label: 'All Brands', href: '/brands' },
+        { label: 'Add Brand', href: '/brands/new' }
+      ]
+    },
+    {
+      id: 'orders',
+      href: '/orders',
+      label: 'Orders',
+      icon: <ShoppingBag className="h-5 w-5" />,
+      hasSubmenu: true,
+      submenuItems: [
+        { label: 'All Orders', href: '/orders' },
+        { label: 'Pending', href: '/orders/pending' },
+        { label: 'Delivered', href: '/orders/delivered' }
+      ]
+    },
+    {
+      id: 'customers',
+      href: '/customers',
+      label: 'Customers',
+      icon: <Users className="h-5 w-5" />,
+      hasSubmenu: false
+    },
+    {
+      id: 'refunds',
+      href: '/refunds',
+      label: 'Refunds',
+      icon: <HandCoins className="h-5 w-5" />,
+      hasSubmenu: true,
+      submenuItems: [
+        { label: 'All Refunds', href: '/refunds' },
+        { label: 'Settings', href: '/refunds/settings' }
+      ]
+    },
+    {
+      id: 'support',
+      href: '/support',
+      label: 'Support Tickets',
+      icon: <Headset className="h-5 w-5" />,
+      hasSubmenu: false
+    },
+    {
+      id: 'settings',
+      href: '/settings',
+      label: 'Site Settings',
+      icon: <Settings className="h-5 w-5" />,
+      hasSubmenu: false
+    }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -103,15 +250,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex flex-col h-full overflow-y-auto py-4 px-2">
           <nav>
             <ul>
-              <NavItem href="/" label="Dashboard" icon={<BarChart2 className="h-5 w-5" />} />
-              <NavItem href="/products" label="Products" icon={<Package className="h-5 w-5" />} hasSubmenu />
-              <NavItem href="/categories" label="Categories" icon={<Folder className="h-5 w-5" />} hasSubmenu />
-              <NavItem href="/brands" label="Brands" icon={<Tag className="h-5 w-5" />} hasSubmenu />
-              <NavItem href="/orders" label="Orders" icon={<ShoppingBag className="h-5 w-5" />} hasSubmenu />
-              <NavItem href="/customers" label="Customers" icon={<Users className="h-5 w-5" />} />
-              <NavItem href="/refunds" label="Refunds" icon={<HandCoins className="h-5 w-5" />} hasSubmenu />
-              <NavItem href="/support" label="Support Tickets" icon={<Headset className="h-5 w-5" />} />
-              <NavItem href="/settings" label="Site Settings" icon={<Settings className="h-5 w-5" />} />
+              {navigationItems.map(item => {
+                const isActive = location === item.href || location.startsWith(item.href + '/') || 
+                  (item.hasSubmenu && item.submenuItems?.some(subItem => 
+                    location === subItem.href || location.startsWith(subItem.href + '/')
+                  ));
+                
+                if (!item.hasSubmenu) {
+                  return (
+                    <SimpleNavItem 
+                      key={item.id}
+                      href={item.href}
+                      label={item.label}
+                      icon={item.icon}
+                      isActive={!!isActive}
+                    />
+                  );
+                }
+                
+                return (
+                  <SubmenuNavItem 
+                    key={item.id}
+                    href={item.href}
+                    label={item.label}
+                    icon={item.icon}
+                    submenuItems={item.submenuItems || []}
+                    isActive={!!isActive}
+                    isExpanded={!!expandedMenus[item.id]}
+                    onToggle={() => toggleSubmenu(item.id)}
+                  />
+                );
+              })}
             </ul>
           </nav>
         </div>
