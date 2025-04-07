@@ -16,7 +16,9 @@ import {
   Headset,
   Settings,
   Menu,
-  X
+  X,
+  ExternalLink,
+  Store
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -282,6 +284,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 );
               })}
             </ul>
+            
+            {/* Website Link in Sidebar */}
+            <div className="mt-6 px-4">
+              <a 
+                href="https://example.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                <span className="w-5 text-center"><Store className="h-5 w-5" /></span>
+                <span>View Website</span>
+                <ExternalLink className="h-3.5 w-3.5 ml-auto" />
+              </a>
+            </div>
           </nav>
         </div>
       </div>
@@ -313,6 +329,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             
             <div className="flex items-center space-x-4">
+              <a 
+                href="https://example.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hidden md:flex items-center space-x-2 text-primary hover:text-primary/80 border border-primary/20 hover:border-primary/40 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Store className="h-4 w-4" />
+                <span className="font-medium text-sm">View Website</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              
               <Button variant="ghost" size="icon" className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full">
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
