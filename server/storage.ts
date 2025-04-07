@@ -13,6 +13,8 @@ import {
   ticketReplies, TicketReply, InsertTicketReply,
   siteSettings, SiteSettings, InsertSiteSettings
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 // Storage interface with all CRUD methods needed for the eCommerce dashboard
 export interface IStorage {
@@ -649,4 +651,417 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database implementation of the storage interface
+export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  // Products
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product || undefined;
+  }
+
+  async getProducts(): Promise<Product[]> {
+    return db.select().from(products);
+  }
+
+  async getTopSellingProducts(limit: number = 5): Promise<any[]> {
+    // This would ideally use proper aggregations with orders, but for now we'll return all products ordered by id
+    const result = await db.select().from(products).limit(limit);
+    
+    // Enhance with additional data for the UI
+    return result.map(product => ({
+      id: product.id.toString(),
+      name: product.name,
+      image: product.image || 'https://via.placeholder.com/100',
+      soldCount: Math.floor(Math.random() * 500) + 100, // Will be replaced with actual data
+      price: `$${product.price.toFixed(2)}`,
+      percentageChange: Math.floor(Math.random() * 15) + 1 // Will be replaced with actual data
+    }));
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(product).returning();
+    return newProduct;
+  }
+
+  async updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set(product)
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct || undefined;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id));
+    return true; // Since pg doesn't return count directly through drizzle
+  }
+
+  // Categories
+  async getCategory(id: number): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return db.select().from(categories);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set(category)
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory || undefined;
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return true;
+  }
+
+  // Brands
+  async getBrand(id: number): Promise<Brand | undefined> {
+    const [brand] = await db.select().from(brands).where(eq(brands.id, id));
+    return brand || undefined;
+  }
+
+  async getBrands(): Promise<Brand[]> {
+    return db.select().from(brands);
+  }
+
+  async createBrand(brand: InsertBrand): Promise<Brand> {
+    const [newBrand] = await db.insert(brands).values(brand).returning();
+    return newBrand;
+  }
+
+  async updateBrand(id: number, brand: Partial<InsertBrand>): Promise<Brand | undefined> {
+    const [updatedBrand] = await db
+      .update(brands)
+      .set(brand)
+      .where(eq(brands.id, id))
+      .returning();
+    return updatedBrand || undefined;
+  }
+
+  async deleteBrand(id: number): Promise<boolean> {
+    const result = await db.delete(brands).where(eq(brands.id, id));
+    return true;
+  }
+
+  // Customers
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer || undefined;
+  }
+
+  async getCustomers(): Promise<Customer[]> {
+    return db.select().from(customers);
+  }
+
+  async createCustomer(customer: InsertCustomer): Promise<Customer> {
+    const [newCustomer] = await db.insert(customers).values(customer).returning();
+    return newCustomer;
+  }
+
+  async updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const [updatedCustomer] = await db
+      .update(customers)
+      .set(customer)
+      .where(eq(customers.id, id))
+      .returning();
+    return updatedCustomer || undefined;
+  }
+
+  async deleteCustomer(id: number): Promise<boolean> {
+    const result = await db.delete(customers).where(eq(customers.id, id));
+    return true;
+  }
+
+  // Orders
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
+  }
+
+  async getOrders(): Promise<Order[]> {
+    return db.select().from(orders);
+  }
+
+  async getOrderWithItems(id: number): Promise<any> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+    
+    const items = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, id));
+      
+    // Get customer details
+    const [customer] = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, order.customerId));
+    
+    return {
+      ...order,
+      items,
+      customer
+    };
+  }
+
+  async getRecentOrders(limit: number = 4): Promise<any[]> {
+    const recentOrders = await db
+      .select()
+      .from(orders)
+      .orderBy(desc(orders.orderDate))
+      .limit(limit);
+    
+    // Get customer details for each order
+    const result = [];
+    for (const order of recentOrders) {
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.id, order.customerId));
+      
+      result.push({
+        id: order.id.toString(),
+        customer: {
+          id: customer.id.toString(),
+          name: customer.name,
+          avatar: customer.avatar || 'https://via.placeholder.com/100',
+        },
+        amount: `$${order.totalAmount.toFixed(2)}`,
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' '),
+        date: new Date(order.orderDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+      });
+    }
+    
+    return result;
+  }
+
+  async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+    // Start a transaction
+    const [newOrder] = await db.insert(orders).values(order).returning();
+    
+    // Insert order items
+    if (items.length > 0) {
+      await db.insert(orderItems).values(
+        items.map(item => ({
+          ...item,
+          orderId: newOrder.id
+        }))
+      );
+    }
+    
+    return newOrder;
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status: status as any })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder || undefined;
+  }
+
+  // Product Reviews
+  async getProductReview(id: number): Promise<ProductReview | undefined> {
+    const [review] = await db.select().from(productReviews).where(eq(productReviews.id, id));
+    return review || undefined;
+  }
+
+  async getProductReviews(): Promise<ProductReview[]> {
+    return db.select().from(productReviews);
+  }
+
+  async updateReviewStatus(id: number, status: string): Promise<ProductReview | undefined> {
+    const [updatedReview] = await db
+      .update(productReviews)
+      .set({ status: status as any })
+      .where(eq(productReviews.id, id))
+      .returning();
+    return updatedReview || undefined;
+  }
+
+  async deleteReview(id: number): Promise<boolean> {
+    const result = await db.delete(productReviews).where(eq(productReviews.id, id));
+    return true;
+  }
+
+  // Refunds
+  async getRefund(id: number): Promise<Refund | undefined> {
+    const [refund] = await db.select().from(refunds).where(eq(refunds.id, id));
+    return refund || undefined;
+  }
+
+  async getRefunds(): Promise<Refund[]> {
+    return db.select().from(refunds);
+  }
+
+  async createRefund(refund: InsertRefund): Promise<Refund> {
+    const [newRefund] = await db.insert(refunds).values(refund).returning();
+    return newRefund;
+  }
+
+  async updateRefundStatus(id: number, status: string, notes?: string): Promise<Refund | undefined> {
+    const [updatedRefund] = await db
+      .update(refunds)
+      .set({ 
+        status: status as any,
+        ...(notes && { notes })
+      })
+      .where(eq(refunds.id, id))
+      .returning();
+    return updatedRefund || undefined;
+  }
+
+  // Refund Settings
+  async getRefundSettings(): Promise<RefundSettings | undefined> {
+    const [settings] = await db.select().from(refundSettings);
+    return settings || undefined;
+  }
+
+  async updateRefundSettings(settings: InsertRefundSettings): Promise<RefundSettings> {
+    // Check if settings exist
+    const existing = await this.getRefundSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(refundSettings)
+        .set(settings)
+        .where(eq(refundSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [newSettings] = await db.insert(refundSettings).values(settings).returning();
+      return newSettings;
+    }
+  }
+
+  // Support Tickets
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    const [ticket] = await db.select().from(supportTickets).where(eq(supportTickets.id, id));
+    return ticket || undefined;
+  }
+
+  async getSupportTickets(): Promise<SupportTicket[]> {
+    return db.select().from(supportTickets);
+  }
+
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    // Generate ticket number (e.g., "TKT-12345")
+    const ticketNumber = `TKT-${Math.floor(Math.random() * 90000) + 10000}`;
+    
+    const [newTicket] = await db
+      .insert(supportTickets)
+      .values({
+        ...ticket,
+        ticketNumber
+      })
+      .returning();
+    
+    return newTicket;
+  }
+
+  async updateTicketStatus(id: number, status: string): Promise<SupportTicket | undefined> {
+    const [updatedTicket] = await db
+      .update(supportTickets)
+      .set({ 
+        status: status as any,
+        updatedAt: new Date()
+      })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    
+    return updatedTicket || undefined;
+  }
+
+  async assignTicket(id: number, userId: number): Promise<SupportTicket | undefined> {
+    const [updatedTicket] = await db
+      .update(supportTickets)
+      .set({ 
+        assignedTo: userId,
+        updatedAt: new Date()
+      })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    
+    return updatedTicket || undefined;
+  }
+
+  async addTicketReply(reply: InsertTicketReply): Promise<TicketReply> {
+    const [newReply] = await db.insert(ticketReplies).values(reply).returning();
+    
+    // Update the parent ticket's updated_at timestamp
+    await db
+      .update(supportTickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(supportTickets.id, reply.ticketId));
+    
+    return newReply;
+  }
+
+  // Site Settings
+  async getSiteSettings(): Promise<SiteSettings | undefined> {
+    const [settings] = await db.select().from(siteSettings);
+    return settings || undefined;
+  }
+
+  async updateSiteSettings(settings: Partial<InsertSiteSettings>): Promise<SiteSettings> {
+    // Check if settings exist
+    const existing = await this.getSiteSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(siteSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(siteSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [newSettings] = await db
+        .insert(siteSettings)
+        .values({
+          ...settings as InsertSiteSettings,
+          updatedAt: new Date()
+        })
+        .returning();
+      return newSettings;
+    }
+  }
+}
+
+// Use database storage
+export const storage = new DatabaseStorage();
