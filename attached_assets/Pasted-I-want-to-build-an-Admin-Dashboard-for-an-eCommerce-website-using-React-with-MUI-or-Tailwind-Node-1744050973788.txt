@@ -1,0 +1,73 @@
+I want to build an Admin Dashboard for an eCommerce website using React (with MUI or Tailwind), Node.js (or Firebase), and MongoDB/PostgreSQL.
+
+Please generate the structure, components, routes, and database models for the following modules:
+
+---
+
+🧩 1. Dashboard (Admin Overview)
+- Display stats: total sales, active customers, total orders, pending refunds, top-selling products.
+- Include charts for sales trends, revenue breakdown, and recent activity.
+
+---
+
+📦 2. Products Tab
+- Product List Page: searchable, filterable table with actions (edit, delete, view reviews).
+- Create Product Page: form with fields like name, price, stock, description, categories, brand, images.
+- Product Reviews Page: view & moderate customer reviews for all products.
+
+---
+
+🗂 3. Categories (Infinitely Nested)
+- Category List Page: display nested structure with expand/collapse.
+- Create Category Page: form to add name, slug, parent category.
+
+---
+
+🏷 4. Brands Tab
+- Brand List Page: list all brands with logo and product count.
+- Create Brand Page: name, logo upload, description.
+
+---
+
+📦 5. Orders Tab
+- Order List Page: searchable/filterable with status (Pending, Shipped, Delivered).
+- Order Details Page: show customer info, product breakdown, delivery status, and total.
+
+---
+
+👥 6. Customers Page
+- List customers with name, email, order count, registration date.
+
+---
+
+💸 7. Refunds Tab
+- Refund Requests Page: list with order, reason, status (Pending, Approved, Rejected).
+- Refund Settings Page: configure refund rules, time limits, and policies.
+
+---
+
+🎟 8. Support Tickets
+- Support Tickets Page: table with ticket ID, customer, issue type, status, reply action.
+
+---
+
+⚙️ 9. Site Settings Page
+- Configure the customer-facing site (logo, primary colors, contact info, policies, homepage layout).
+
+---
+
+🎯 Tech Stack:
+- Frontend: React + MUI or Tailwind + React Router
+- Backend: Node.js + Express (or Firebase Functions)
+- DB: postgresql
+- Auth: Firebase Auth or JWT
+
+Generate:
+- Folder structure
+- All route paths for frontend
+- API endpoints
+- Database schema
+- Components layout
+- Sample data
+
+Make the UI modern and modular — similar to Shopify or Bazaar Dashboard.
