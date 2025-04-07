@@ -95,7 +95,7 @@ const SubmenuNavItem = ({
               <li key={index}>
                 <Link href={item.href}>
                   <div className={`block py-2 px-4 rounded-lg cursor-pointer ${
-                    location.startsWith(item.href)
+                    location === item.href || location.startsWith(item.href + '/')
                       ? "bg-gray-700 text-white"
                       : "text-gray-400 hover:bg-gray-700 hover:text-gray-300"
                   }`}>

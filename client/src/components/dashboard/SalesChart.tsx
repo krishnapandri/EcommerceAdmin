@@ -30,10 +30,13 @@ export default function SalesChart({ title }: SalesChartProps) {
       <CardContent className="p-5 pt-5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-800">{title}</h3>
-          <select className="text-sm border border-gray-300 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-            <option>Last 7 days</option>
-            <option selected>Last 30 days</option>
-            <option>Last 90 days</option>
+          <select 
+            defaultValue="30"
+            className="text-sm border border-gray-300 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
           </select>
         </div>
         <div className="h-80">

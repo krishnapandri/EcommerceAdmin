@@ -87,7 +87,7 @@ export default function RecentOrdersTable() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link href={`/orders/${order.id}`}>
-                      <a className="text-primary hover:text-primary/80">View</a>
+                      <div className="text-primary hover:text-primary/80 cursor-pointer">View</div>
                     </Link>
                   </td>
                 </tr>
@@ -98,7 +98,7 @@ export default function RecentOrdersTable() {
       </div>
       <div className="bg-gray-50 px-5 py-3 border-t border-gray-200 text-center">
         <Link href="/orders">
-          <a className="text-primary hover:underline text-sm font-medium">View all orders</a>
+          <div className="text-primary hover:underline text-sm font-medium cursor-pointer">View all orders</div>
         </Link>
       </div>
     </Card>
