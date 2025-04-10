@@ -1,20 +1,19 @@
-import {
-  users, User, InsertUser,
-  products, Product, InsertProduct,
-  categories, Category, InsertCategory,
-  brands, Brand, InsertBrand,
-  customers, Customer, InsertCustomer,
-  orders, Order, InsertOrder,
-  orderItems, OrderItem, InsertOrderItem,
-  productReviews, ProductReview, InsertProductReview,
-  refunds, Refund, InsertRefund,
-  refundSettings, RefundSettings, InsertRefundSettings,
-  supportTickets, SupportTicket, InsertSupportTicket,
-  ticketReplies, TicketReply, InsertTicketReply,
-  siteSettings, SiteSettings, InsertSiteSettings
+import { 
+  User, InsertUser,
+  Product, InsertProduct,
+  Category, InsertCategory,
+  Brand, InsertBrand,
+  Customer, InsertCustomer,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
+  ProductReview, InsertProductReview,
+  Refund, InsertRefund,
+  RefundSettings, InsertRefundSettings,
+  SupportTicket, InsertSupportTicket,
+  TicketReply, InsertTicketReply,
+  SiteSettings, InsertSiteSettings
 } from "@shared/schema";
-import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { dataSource, initializeDatabase } from "./db";
 
 // Storage interface with all CRUD methods needed for the eCommerce dashboard
 export interface IStorage {
