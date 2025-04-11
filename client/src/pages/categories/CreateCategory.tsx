@@ -159,7 +159,7 @@ export default function CreateCategory() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None (Top-level category)</SelectItem>
+                        <SelectItem value="''">None (Top-level category)</SelectItem>
                         {categories?.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.name}
