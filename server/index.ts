@@ -1,6 +1,8 @@
+import "reflect-metadata"; // Must be imported before any TypeORM entities
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeDatabase } from "./db";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +39,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize database connection before registering routes
+  try {
+    await initializeDatabase();
+    console.log("Database connection established successfully");
+  } catch (error) {
+    console.error("Failed to initialize database connection:", error);
+    // Continue execution even if database initialization fails
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
