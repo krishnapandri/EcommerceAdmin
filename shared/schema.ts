@@ -320,7 +320,7 @@ export class Refund {
   @CreateDateColumn()
   requestDate: Date;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: 'timestamp' })
   processedDate: Date | null;
 
   @ManyToOne(() => Order, order => order.refunds)

@@ -654,62 +654,80 @@ export class MemStorage implements IStorage {
 export class DatabaseStorage implements IStorage {
   // Users
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const userRepository = dataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { id } });
     return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const userRepository = dataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { username } });
     return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    const userRepository = dataSource.getRepository(User);
+    const user = userRepository.create(insertUser);
+    return await userRepository.save(user);
   }
 
   // Products
   async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
+    const productRepository = dataSource.getRepository(Product);
+    const product = await productRepository.findOne({ 
+      where: { id },
+      relations: ['category', 'brand']
+    });
     return product || undefined;
   }
 
   async getProducts(): Promise<Product[]> {
-    return db.select().from(products);
+    const productRepository = dataSource.getRepository(Product);
+    return await productRepository.find({
+      relations: ['category', 'brand']
+    });
   }
 
   async getTopSellingProducts(limit: number = 5): Promise<any[]> {
-    // This would ideally use proper aggregations with orders, but for now we'll return all products ordered by id
-    const result = await db.select().from(products).limit(limit);
+    const productRepository = dataSource.getRepository(Product);
+    // This would ideally use proper aggregations with orders, but for now we'll return all products
+    const products = await productRepository.find({
+      take: limit,
+      relations: ['category', 'brand']
+    });
     
     // Enhance with additional data for the UI
-    return result.map(product => ({
+    return products.map((product, index) => ({
       id: product.id.toString(),
       name: product.name,
       image: product.image || 'https://via.placeholder.com/100',
-      soldCount: Math.floor(Math.random() * 500) + 100, // Will be replaced with actual data
-      price: `$${product.price.toFixed(2)}`,
-      percentageChange: Math.floor(Math.random() * 15) + 1 // Will be replaced with actual data
+      soldCount: 1000 - (index * 100), // Mock data for demonstration
+      price: `$${product.price}`,
+      percentageChange: 24.5 - (index * 2.1) // Mock data for demonstration
     }));
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    const [newProduct] = await db.insert(products).values(product).returning();
-    return newProduct;
+    const productRepository = dataSource.getRepository(Product);
+    const newProduct = productRepository.create(product);
+    return await productRepository.save(newProduct);
   }
 
   async updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined> {
-    const [updatedProduct] = await db
-      .update(products)
-      .set(product)
-      .where(eq(products.id, id))
-      .returning();
-    return updatedProduct || undefined;
+    const productRepository = dataSource.getRepository(Product);
+    const existingProduct = await productRepository.findOne({ where: { id } });
+    if (!existingProduct) {
+      return undefined;
+    }
+    
+    productRepository.merge(existingProduct, product);
+    return await productRepository.save(existingProduct);
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    const result = await db.delete(products).where(eq(products.id, id));
-    return true; // Since pg doesn't return count directly through drizzle
+    const productRepository = dataSource.getRepository(Product);
+    const result = await productRepository.delete(id);
+    return result.affected ? result.affected > 0 : false;
   }
 
   // Categories
@@ -832,38 +850,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentOrders(limit: number = 4): Promise<any[]> {
-    const recentOrders = await db
-      .select()
-      .from(orders)
-      .orderBy(desc(orders.orderDate))
-      .limit(limit);
+    const orderRepository = dataSource.getRepository(Order);
     
-    // Get customer details for each order
-    const result = [];
-    for (const order of recentOrders) {
-      const [customer] = await db
-        .select()
-        .from(customers)
-        .where(eq(customers.id, order.customerId));
+    // Get recent orders with customer relation
+    const recentOrders = await orderRepository.find({
+      relations: ['customer'],
+      order: { orderDate: 'DESC' },
+      take: limit
+    });
+    
+    // Format for the UI
+    return recentOrders.map(order => {
+      const customer = order.customer || { id: 0, name: 'Unknown Customer' };
       
-      result.push({
+      return {
         id: order.id.toString(),
         customer: {
           id: customer.id.toString(),
           name: customer.name,
-          avatar: customer.avatar || 'https://via.placeholder.com/100',
+          avatar: customer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.name)}`
         },
-        amount: `$${order.totalAmount.toFixed(2)}`,
-        status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' '),
+        amount: `$${order.total}`,
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
         date: new Date(order.orderDate).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
-        }),
-      });
-    }
-    
-    return result;
+        })
+      };
+    });
   }
 
   async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
@@ -1062,5 +1077,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use database storage
-export const storage = new DatabaseStorage();
+// Use memory storage for now until database implementation is complete
+export const storage = new MemStorage();
