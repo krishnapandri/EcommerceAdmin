@@ -1,7 +1,8 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import * as entities from "@shared/schema";
-
+import dotenv from 'dotenv';
+dotenv.config();
 // Get all entity classes from the schema file
 const allEntities = [
   entities.User,
@@ -21,12 +22,11 @@ const allEntities = [
 
 // Create TypeORM datasource using PostgreSQL
 export const dataSource = new DataSource({
-  type: "postgres",
+  type: "mssql",
   url: process.env.DATABASE_URL,
   synchronize: true, // Only for development, set to false in production
   logging: false,
   entities: allEntities,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 // Initialize database connection
